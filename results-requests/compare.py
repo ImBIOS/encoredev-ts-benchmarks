@@ -1,4 +1,5 @@
 import json
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -51,7 +52,9 @@ rps1 = ax1.bar(x - width / 2, rps_no_schema, width, label="No Schema")
 rps2 = ax1.bar(x + width / 2, rps_schema, width, label="With Schema")
 
 ax1.set_ylabel("Requests per Second")
-ax1.set_title("Framework Performance Comparison - Requests per Second")
+ax1.set_title(
+    "Framework Performance Comparison - Requests per Second (Higher is Better)"
+)
 ax1.set_xticks(x)
 ax1.set_xticklabels(framework_names)
 ax1.legend()
@@ -73,7 +76,7 @@ lat1 = ax2.bar(x - width / 2, latency_no_schema, width, label="No Schema")
 lat2 = ax2.bar(x + width / 2, latency_schema, width, label="With Schema")
 
 ax2.set_ylabel("Average Latency (ms)")
-ax2.set_title("Framework Performance Comparison - Average Latency")
+ax2.set_title("Framework Performance Comparison - Average Latency (Lower is Better)")
 ax2.set_xticks(x)
 ax2.set_xticklabels(framework_names)
 ax2.legend()
