@@ -202,7 +202,41 @@ start_server() {
   local FRAMEWORK_DIR=$(basename "$(pwd)")
   echo "DEBUG: Framework directory: $FRAMEWORK_DIR"
 
-  if [ -f "bun.lockb" ]; then
+  if [ -f "encore.app" ]; then
+    echo "DEBUG: Running Encore server..."
+    # Create a temporary file for server output
+    local TEMP_LOG=$(mktemp)
+
+    PORT=$FRAMEWORK_PORT ENCORE_LOG=off ENCORE_NOTRACE=1 ENCORE_RUNTIME_LOG=debug encore run >"$TEMP_LOG" 2>&1 &
+    SERVER_PID=$!
+
+    # Wait for the server to start and capture the API port
+    local MAX_ATTEMPTS=30
+    local ATTEMPT=0
+    local API_PORT
+
+    while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+      # Look for the API server port in the log file
+      API_PORT=$(grep -o "api server listening for incoming requests addr=127.0.0.1:[0-9]\+" "$TEMP_LOG" | grep -o "[0-9]\+$")
+
+      if [ -n "$API_PORT" ]; then
+        echo "DEBUG: Found Encore API port: $API_PORT"
+        FRAMEWORK_PORT=$API_PORT
+        echo "$API_PORT"
+        rm -f "$TEMP_LOG"
+        return 0
+      fi
+
+      sleep 1
+      ATTEMPT=$((ATTEMPT + 1))
+    done
+
+    echo "DEBUG: Failed to find Encore API port"
+    cat "$TEMP_LOG"
+    rm -f "$TEMP_LOG"
+    return 1
+
+  elif [ -f "bun.lockb" ]; then
     echo "DEBUG: Found bun.lockb, checking start scripts..."
 
     START_TIME=$(date +%s)
@@ -261,10 +295,7 @@ start_server() {
     TEMP_LOG=$(mktemp)
     echo "DEBUG: Created temp log file: $TEMP_LOG"
 
-    if [ -f "encore.app" ]; then
-      echo "DEBUG: Running 'ENCORE_LOG=off ENCORE_NOTRACE=1 ENCORE_RUNTIME_LOG=debug encore run'"
-      PORT=$FRAMEWORK_PORT ENCORE_LOG=off ENCORE_NOTRACE=1 ENCORE_RUNTIME_LOG=debug encore run >"$TEMP_LOG" 2>&1 &
-    elif [ -f "main.js" ]; then
+    if [ -f "main.js" ]; then
       echo "DEBUG: Running 'node main.js'"
       PORT=$FRAMEWORK_PORT node main.js >"$TEMP_LOG" 2>&1 &
     fi
@@ -380,7 +411,7 @@ for FRAMEWORK_PATH in "$REQUESTS_DIR"/*; do
     BASE_FRAMEWORK=$(get_base_name "$FRAMEWORK")
 
     # Skip if this is a schema version or versioned framework
-    if [[ ! "$FRAMEWORK" =~ -schema ]] && [[ ! "$FRAMEWORK" =~ -v[0-9]+ ]]; then
+    if [[ ! "$FRAMEWORK" =~ -schema ]]; then
       SCHEMA_VERSION="${BASE_FRAMEWORK}-schema"
       SCHEMA_PATH="$REQUESTS_DIR/$SCHEMA_VERSION"
 

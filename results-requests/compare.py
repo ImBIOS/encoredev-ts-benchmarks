@@ -17,6 +17,7 @@ frameworks = {
     "Encore": ["encore_no_schema.json", "encore_schema.json"],
     "Express": ["express_no_schema.json", "express_schema.json"],
     "Fastify": ["fastify_no_schema.json", "fastify_schema.json"],
+    "Fastify v5": ["fastify-v5_no_schema.json", "fastify-v5_schema.json"],
     "Hono": ["hono_no_schema.json", "hono_schema.json"],
 }
 
